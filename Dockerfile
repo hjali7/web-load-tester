@@ -1,5 +1,5 @@
 # Build stage
-FROM rust:1.75-slim as builder
+FROM rust:1.75 as builder
 
 WORKDIR /usr/src/app
 COPY . .
@@ -13,21 +13,20 @@ RUN apt-get update && \
 RUN cargo build --release
 
 # Runtime stage
-FROM debian:bookworm-slim
+FROM debian:bullseye-slim
 
-WORKDIR /usr/local/bin
-
-# Install runtime dependencies
 RUN apt-get update && \
-    apt-get install -y ca-certificates libssl3 && \
+    apt-get install -y ca-certificates && \
     rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
 
 # Copy the binary from builder
 COPY --from=builder /usr/src/app/target/release/web-load-tester .
 COPY --from=builder /usr/src/app/static ./static
 
 # Expose the port
-EXPOSE 3000
+EXPOSE 8080
 
 # Run the application
 CMD ["./web-load-tester"] 

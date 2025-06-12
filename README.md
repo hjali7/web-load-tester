@@ -1,119 +1,119 @@
 # Web Load Tester
 
-A modern, real-time web load testing tool built with Rust and a beautiful web dashboard. This tool helps you test the performance and reliability of your web applications under load.
+A powerful web load testing tool written in Rust, featuring real-time metrics, interactive charts, and a modern web dashboard.
 
 ## Features
 
-- 🚀 **Real-time Metrics**: Monitor test results in real-time with a modern web dashboard
-- 📊 **Interactive Charts**: Visualize latency and request patterns with dynamic charts
-- 🌓 **Dark/Light Mode**: Toggle between dark and light themes for comfortable viewing
-- 📈 **Comprehensive Metrics**:
-  - Total Requests
-  - Success Rate
-  - Average Latency
-  - Requests per Second
-  - Min/Max Latency
-- 📥 **Data Export**: Export test results to CSV for further analysis
-- 🔄 **Concurrent Testing**: Simulate multiple users with configurable concurrency
-- ⏱️ **Ramp-up Support**: Gradually increase load with configurable ramp-up time
-- 🎨 **Responsive Design**: Works seamlessly on both desktop and mobile devices
-
-## Prerequisites
-
-- Rust 1.75 or higher
-- OpenSSL development libraries
-- A modern web browser
-
-### Installing Dependencies
-
-#### Ubuntu/Debian
-```bash
-sudo apt-get update
-sudo apt-get install pkg-config libssl-dev
-```
-
-#### Windows
-1. Install OpenSSL from [OpenSSL for Windows](https://slproweb.com/products/Win32OpenSSL.html)
-2. Add OpenSSL to your system PATH
-
-#### macOS
-```bash
-brew install openssl
-```
+- Real-time metrics visualization
+- Interactive charts for latency and throughput
+- Modern web dashboard
+- Support for HTTP/HTTPS requests
+- Concurrent request handling
+- CSV export functionality
+- Dark/Light theme support
+- Responsive design for all devices
 
 ## Installation
 
-1. Clone the repository:
+### Using Pre-built Binaries
+
+#### Ubuntu
+1. Download the latest release from the [Releases](https://github.com/YOUR_USERNAME/web-load-tester/releases) page
+2. Extract the archive:
 ```bash
-git clone https://github.com/yourusername/web-load-tester.git
-cd web-load-tester
+tar -xzf web-load-tester-ubuntu.tar.gz
+```
+3. Make the binary executable:
+```bash
+chmod +x web-load-tester
 ```
 
-2. Build the project:
+#### Windows
+1. Download the latest release from the [Releases](https://github.com/YOUR_USERNAME/web-load-tester/releases) page
+2. Extract the ZIP file
+3. Run `web-load-tester.exe`
+
+### Building from Source
+
+#### Prerequisites
+- Rust (latest stable version)
+- Cargo
+- OpenSSL development libraries
+
+#### Ubuntu
 ```bash
+# Install OpenSSL development libraries
+sudo apt-get update
+sudo apt-get install pkg-config libssl-dev
+
+# Clone the repository
+git clone https://github.com/YOUR_USERNAME/web-load-tester.git
+cd web-load-tester
+
+# Build the project
 cargo build --release
+
+# The binary will be available at target/release/web-load-tester
+```
+
+#### Windows
+```bash
+# Clone the repository
+git clone https://github.com/YOUR_USERNAME/web-load-tester.git
+cd web-load-tester
+
+# Build the project
+cargo build --release
+
+# The binary will be available at target/release/web-load-tester.exe
 ```
 
 ## Usage
 
-1. Start the server:
+1. Start the application:
 ```bash
-cargo run --release
+# Ubuntu
+./web-load-tester
+
+# Windows
+web-load-tester.exe
 ```
 
-2. Open your browser and navigate to:
-```
-http://localhost:3000
-```
+2. Open your web browser and navigate to `http://localhost:8080`
 
-3. Configure your test:
+3. Configure your load test:
    - Enter the target URL
    - Set the number of concurrent users
-   - Define test duration
-   - Set ramp-up time
+   - Set the test duration
+   - Click "Start Test"
 
-4. Click "Start Test" to begin the load test
-
-5. Monitor real-time results in the dashboard
-
-6. Export results to CSV when the test is complete
+4. View real-time results in the dashboard:
+   - Monitor request success/failure rates
+   - Track latency metrics
+   - View throughput charts
+   - Export results to CSV
 
 ## Docker Support
 
-Build and run using Docker:
+You can also run the application using Docker:
 
 ```bash
-# Build the image
-docker build -t web-load-tester .
-
-# Run the container
-docker run -p 3000:3000 web-load-tester
+docker pull ghcr.io/YOUR_USERNAME/web-load-tester:latest
+docker run -p 8080:8080 ghcr.io/YOUR_USERNAME/web-load-tester:latest
 ```
 
-## Development
+## Project Structure
 
-### Project Structure
 ```
 web-load-tester/
 ├── src/
-│   └── main.rs          # Main application code
+│   └── main.rs
 ├── static/
-│   └── index.html       # Web dashboard
-├── Cargo.toml           # Rust dependencies
-├── Dockerfile          # Docker configuration
-└── README.md           # This file
-```
-
-### Building from Source
-```bash
-# Debug build
-cargo build
-
-# Release build
-cargo build --release
-
-# Run tests
-cargo test
+│   └── index.html
+├── Cargo.toml
+├── Dockerfile
+├── LICENSE
+└── README.md
 ```
 
 ## Contributing
@@ -130,7 +130,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Author
 
-Your Name - [Your GitHub Profile](https://github.com/yourusername)
+HajAli
 
 ## Acknowledgments
 
