@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Load Tester</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        danger: '#EF4444',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .dark {
+            color-scheme: dark;
+        }
+        .dark ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .dark ::-webkit-scrollbar-track {
+            background: #1F2937;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #4B5563;
+            border-radius: 4px;
+        }
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #6B7280;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="flex justify-between items-center mb-8">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-tachometer-alt text-2xl text-primary"></i>
+                <h1 class="text-2xl font-bold">Web Load Tester</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button id="themeToggle" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">
+                    <i class="fas fa-sun text-yellow-500 dark:hidden"></i>
+                    <i class="fas fa-moon text-blue-300 hidden dark:block"></i>
+                </button>
+                <button id="exportCsv" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center space-x-2">
+                    <i class="fas fa-download"></i>
+                    <span>Export CSV</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Test Configuration -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Test Configuration</h2>
+                <form id="testForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Target URL</label>
+                        <input type="url" name="url" required
+                            class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                            placeholder="https://example.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Concurrent Users</label>
+                        <input type="number" name="concurrent_users" required min="1" max="1000"
+                            class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                            placeholder="10">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Duration (seconds)</label>
+                        <input type="number" name="duration_seconds" required min="1" max="3600"
+                            class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                            placeholder="60">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Ramp-up Time (seconds)</label>
+                        <input type="number" name="ramp_up_seconds" required min="0" max="3600"
+                            class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                            placeholder="10">
+                    </div>
+                    <button type="submit"
+                        class="w-full bg-primary text-white py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                        Start Test
+                    </button>
+                </form>
+            </div>
+
+            <!-- Real-time Metrics -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Real-time Metrics</h2>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Requests</h3>
+                            <p id="totalRequests" class="text-2xl font-bold">0</p>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Success Rate</h3>
+                            <p id="successRate" class="text-2xl font-bold">0%</p>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Average Latency</h3>
+                            <p id="avgLatency" class="text-2xl font-bold">0ms</p>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Requests/Second</h3>
+                            <p id="rps" class="text-2xl font-bold">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Performance Charts</h2>
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Latency Over Time</h3>
+                        <canvas id="latencyChart"></canvas>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Requests Over Time</h3>
+                        <canvas id="requestsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+        });
+
+        // Charts initialization
+        const latencyChart = new Chart(document.getElementById('latencyChart'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Latency (ms)',
+                    data: [],
+                    borderColor: '#3B82F6',
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Latency (ms)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        }
+                    }
+                }
+            }
+        });
+
+        const requestsChart = new Chart(document.getElementById('requestsChart'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Requests',
+                    data: [],
+                    borderColor: '#10B981',
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Requests'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Metrics history for CSV export
+        let metricsHistory = [];
+
+        // Start metrics polling
+        function startMetricsPolling() {
+            const pollInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('/api/metrics');
+                    const metrics = await response.json();
+                    
+                    // Update metrics display
+                    document.getElementById('totalRequests').textContent = metrics.total_requests;
+                    document.getElementById('successRate').textContent = 
+                        `${((metrics.successful_requests / metrics.total_requests) * 100 || 0).toFixed(1)}%`;
+                    document.getElementById('avgLatency').textContent = `${metrics.average_latency.toFixed(2)}ms`;
+                    document.getElementById('rps').textContent = metrics.requests_per_second.toFixed(2);
+
+                    // Update charts
+                    const timestamp = new Date().toLocaleTimeString();
+                    latencyChart.data.labels.push(timestamp);
+                    latencyChart.data.datasets[0].data.push(metrics.average_latency);
+                    requestsChart.data.labels.push(timestamp);
+                    requestsChart.data.datasets[0].data.push(metrics.total_requests);
+
+                    // Keep only last 20 data points
+                    if (latencyChart.data.labels.length > 20) {
+                        latencyChart.data.labels.shift();
+                        latencyChart.data.datasets[0].data.shift();
+                        requestsChart.data.labels.shift();
+                        requestsChart.data.datasets[0].data.shift();
+                    }
+
+                    latencyChart.update();
+                    requestsChart.update();
+
+                    // Store metrics for CSV export
+                    metricsHistory.push({
+                        timestamp,
+                        ...metrics
+                    });
+
+                } catch (error) {
+                    console.error('Failed to fetch metrics:', error);
+                }
+            }, 1000);
+
+            return pollInterval;
+        }
+
+        // Form submission
+        const testForm = document.getElementById('testForm');
+        let currentPollInterval = null;
+
+        testForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Stop previous polling if exists
+            if (currentPollInterval) {
+                clearInterval(currentPollInterval);
+            }
+
+            // Reset charts and metrics
+            latencyChart.data.labels = [];
+            latencyChart.data.datasets[0].data = [];
+            requestsChart.data.labels = [];
+            requestsChart.data.datasets[0].data = [];
+            metricsHistory = [];
+            latencyChart.update();
+            requestsChart.update();
+
+            const formData = new FormData(testForm);
+            const config = {
+                url: formData.get('url'),
+                concurrent_users: parseInt(formData.get('concurrent_users')),
+                duration_seconds: parseInt(formData.get('duration_seconds')),
+                ramp_up_seconds: parseInt(formData.get('ramp_up_seconds'))
+            };
+
+            try {
+                const response = await fetch('/api/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(config)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to start test');
+                }
+
+                // Start polling for metrics
+                currentPollInterval = startMetricsPolling();
+
+            } catch (error) {
+                console.error('Failed to start test:', error);
+            }
+        });
+
+        // CSV Export
+        document.getElementById('exportCsv').addEventListener('click', () => {
+            if (metricsHistory.length === 0) {
+                alert('No test data available to export');
+                return;
+            }
+
+            const headers = ['Timestamp', 'Total Requests', 'Successful Requests', 'Failed Requests', 
+                           'Average Latency', 'Min Latency', 'Max Latency', 'Requests/Second'];
+            
+            const csvContent = [
+                headers.join(','),
+                ...metricsHistory.map(metrics => [
+                    metrics.timestamp,
+                    metrics.total_requests,
+                    metrics.successful_requests,
+                    metrics.failed_requests,
+                    metrics.average_latency.toFixed(2),
+                    metrics.min_latency.toFixed(2),
+                    metrics.max_latency.toFixed(2),
+                    metrics.requests_per_second.toFixed(2)
+                ].join(','))
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `load-test-results-${new Date().toISOString()}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        });
+    </script>
+</body>
+</html> 
