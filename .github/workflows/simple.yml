@@ -1,0 +1,14 @@
+name: Simple Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create test file
+        run: echo "Test" > test.txt
+
+      - name: List files
+        run: ls -la 
