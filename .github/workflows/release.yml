@@ -6,7 +6,8 @@ on:
       - 'v*'
 
 jobs:
-  build:
+  build_and_package:
+    name: Build and Package Release
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -14,10 +15,12 @@ jobs:
         include:
           - os: ubuntu-latest
             artifact_name: web-load-tester-ubuntu
-            file_extension: .tar.gz
+            asset_name_suffix: -ubuntu.tar.gz
+            file_to_upload: web-load-tester-ubuntu.tar.gz
           - os: windows-latest
             artifact_name: web-load-tester-windows
-            file_extension: .zip
+            asset_name_suffix: -windows.zip
+            file_to_upload: web-load-tester-windows.zip
 
     steps:
       - uses: actions/checkout@v4
@@ -31,32 +34,71 @@ jobs:
       - name: Build
         run: cargo build --release
 
-      - name: Create Release Package
+      - name: Create Release Package (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          mkdir -p release
-          cp target/release/web-load-tester release/
-          cp -r static release/
-          cp README.md release/
-          cp LICENSE release/
-          tar -czf ${{ matrix.artifact_name }}${{ matrix.file_extension }} -C release .
+          mkdir -p release_assets
+          cd release_assets
+          mkdir -p web-load-tester-ubuntu/static
+          cp ../target/release/web-load-tester web-load-tester-ubuntu/
+          cp -r ../static web-load-tester-ubuntu/static/
+          cp ../README.md web-load-tester-ubuntu/
+          cp ../LICENSE web-load-tester-ubuntu/
+          tar -czf ../${{ matrix.file_to_upload }} -C web-load-tester-ubuntu .
+          cd ..
 
-      - name: Create Windows Package
+      - name: Create Release Package (Windows)
         if: matrix.os == 'windows-latest'
+        shell: cmd # Use cmd for windows specific commands if needed, though powershell is default
         run: |
-          mkdir release
-          copy target\release\web-load-tester.exe release\
-          xcopy /E /I static release\static
-          copy README.md release\
-          copy LICENSE release\
-          7z a ${{ matrix.artifact_name }}${{ matrix.file_extension }} .\release\*
+          mkdir release_assets
+          cd release_assets
+          mkdir web-load-tester-windows\static
+          copy ..\target\release\web-load-tester.exe web-load-tester-windows\
+          xcopy /E /I ..\static web-load-tester-windows\static
+          copy ..\README.md web-load-tester-windows\
+          copy ..\LICENSE web-load-tester-windows\
+          7z a ..\${{ matrix.file_to_upload }} -w web-load-tester-windows\*
+          cd ..
 
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
+      - name: Store artifact for release job
+        uses: actions/upload-artifact@v3 # v3 is current
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.file_to_upload }}
+
+  create_release:
+    name: Create GitHub Release
+    needs: build_and_package
+    runs-on: ubuntu-latest
+    permissions: # Needed for softprops/action-gh-release
+      contents: write
+    steps:
+      - name: Download all release artifacts
+        uses: actions/download-artifact@v3 # v3 is current
+        with:
+          path: release_artifacts # All artifacts will be downloaded into subdirectories here
+
+      - name: List downloaded files
+        run: |
+          ls -R release_artifacts
+          # The files will be in release_artifacts/<artifact_name>/<file_name>
+          # We need to move them to a flat structure or provide glob patterns that reach into these dirs.
+          # For simplicity, let's prepare them in a single 'upload_dir'
+          mkdir upload_dir
+          find release_artifacts -type f -name '*.tar.gz' -exec mv {} upload_dir/ \;
+          find release_artifacts -type f -name '*.zip' -exec mv {} upload_dir/ \;
+          echo "Files to upload:"
+          ls upload_dir/
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            upload_dir/*.tar.gz
+            upload_dir/*.zip
+          # body_path: "CHANGELOG.md" # Optional: if you have a changelog
+          # draft: false # Optional: set to true to create a draft release
+          # prerelease: false # Optional: set to true to mark as prerelease
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./${{ matrix.artifact_name }}${{ matrix.file_extension }}
-          asset_name: ${{ matrix.artifact_name }}${{ matrix.file_extension }}
-          asset_content_type: application/octet-stream 
